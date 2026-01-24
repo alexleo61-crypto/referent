@@ -16,12 +16,31 @@ export default function Home() {
     setIsLoading(true)
     setResult('')
 
-    // Здесь будет логика обработки
-    // Пока просто имитация загрузки
-    setTimeout(() => {
-      setResult(`Результат для действия "${action}" будет здесь...`)
+    try {
+      // Парсим статью
+      const response = await fetch('/api/parse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url.trim() }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Ошибка при парсинге статьи')
+      }
+
+      const data = await response.json()
+      
+      // Форматируем JSON для красивого отображения
+      const formattedJson = JSON.stringify(data, null, 2)
+      setResult(formattedJson)
+    } catch (error: any) {
+      setResult(`Ошибка: ${error.message}`)
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -90,8 +109,10 @@ export default function Home() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             ) : result ? (
-              <div className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                {result}
+              <div className="text-gray-800 dark:text-gray-200">
+                <pre className="whitespace-pre-wrap font-mono text-sm bg-gray-100 dark:bg-gray-800 p-4 rounded overflow-x-auto">
+                  {result}
+                </pre>
               </div>
             ) : (
               <div className="text-gray-400 dark:text-gray-500 text-center">
